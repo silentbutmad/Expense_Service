@@ -20,7 +20,6 @@ model Transaction {
   party_id           String?  @db.Uuid
 
   transaction_type   TransactionType
-  status             TransactionStatus @default(DRAFT)
 
   transaction_date   DateTime
   due_date           DateTime?
@@ -31,7 +30,6 @@ model Transaction {
 
   is_deleted         Boolean  @default(false)
 
-  version            Int      @default(1)
   device_id          String?
   last_modified_at   DateTime @updatedAt
 
@@ -39,173 +37,109 @@ model Transaction {
   created_by_user_id String   @db.Uuid
   updated_by_user_id String?  @db.Uuid
 
-  business Business @relation(fields: [business_id], references: [business_id])
-  party    Party?   @relation(fields: [party_id], references: [party_id])
-  payments Payment[]
-  items    TransactionItem[]
 
   @@unique([business_id, transaction_number])
   @@index([business_id])
   @@index([party_id])
   @@index([business_id, transaction_date])
-  @@index([business_id, status])
 }
 
 model Business {
-  business_id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id       String   @db.Uuid
-  name          String
-  gstNumber     String?
+  business_name String
+  gst_number     String?
   address       String?
 
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-  parties       Party[]
-  items         Item[]
-  transactions  Transaction[]
-  categories    ExpenseCategory[]
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([userId])
+  @@index([user_id])
 }
 
-model User {
-  user_id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  first_name      String
-  last_name       String
-  email           String   @unique
-  mobile_number   String   @unique
-  language        String?
-  password_hash   String
-  salt            String?
-  isverified      Boolean? @default(false)
-  isactive        Boolean  @default(true)
-  failed_attempts Int      @default(0)
-  last_login      DateTime
-  create_at       DateTime @default(now())
-  updated_at      DateTime @updatedAt
-}
 
-model ExpenseCategory {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  businessId  String   @db.Uuid
-  name        String
 
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+model Expense_Category {
+  category_id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id  String   @db.Uuid
+  category_name        String
 
   createdAt   DateTime @default(now())
 
-  @@unique([businessId, name])
+  @@unique([business_id, category_name])
+  @@index([business_id])
 }
 
 model Party {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  businessId  String   @db.Uuid
-  name        String
-  phone       String?
-  type        PartyType
+  party_id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id   String   @db.Uuid
+  name          String
+  phone         String?
+  party_type    PartyType
 
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([businessId])
+  @@index([business_id])
 }
 
 model Item {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  businessId  String   @db.Uuid
+  item_id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id  String   @db.Uuid
   name        String
   price       Decimal  @db.Decimal(12, 2)
   unit        String?
-  gstRate     Decimal? @db.Decimal(5, 2)
-  hsnCode     String?
-  type        ItemType
-  categoryId  String?  @db.Uuid
-
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
-  transactionItems TransactionItem[]
+  gst_rate     Decimal? @db.Decimal(5, 2)
+  hsn_code     String?
+  item_type    ItemType
+  category_id  String?  @db.Uuid
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([businessId])
+  @@index([business_id])
 }
 
-model TransactionItem {
+model Transaction_item {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  transactionId String   @db.Uuid
-  itemId        String   @db.Uuid
+  transaction_id String   @db.Uuid
+  item_id        String   @db.Uuid
   quantity      Int
   price         Decimal  @db.Decimal(12, 2)
 
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  item          Item        @relation(fields: [itemId], references: [id])
 
-  @@index([transactionId])
+  @@index([transaction_id])
+  @@index([item_id])
 }
 
-model Payment {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  transactionId   String   @db.Uuid
-  amount          Decimal  @db.Decimal(14, 2)
-  mode            PaymentMode
-  reference       String?
-  paymentDate     DateTime
 
-  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime @default(now())
-
-  @@index([transactionId])
-}
 
 model Reminder {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  transactionId String   @db.Uuid
+  reminder_id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transaction_id String   @db.Uuid
   channel       ReminderChannel
-  scheduledDate DateTime
+  scheduled_date DateTime
   status        ReminderStatus @default(PENDING)
-  lastSentAt    DateTime?
+  last_sent_at    DateTime?
 
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-
-  @@index([transactionId])
+  
+  @@index([transaction_id])
 }
 
-model SupportTicket {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @db.Uuid
-  subject   String
-  message   String
-  status    TicketStatus @default(OPEN)
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-}
 
 enum TransactionType {
-  INCOME
+  SALE
   EXPENSE
+  PURCHASE
 }
 
 enum PartyType {
   CUSTOMER
-  VENDOR
+  sUPPLIER
 }
 
-enum PaymentMode {
-  CASH
-  CARD
-  UPI
-  BANK_TRANSFER
-}
 
 enum ReminderChannel {
   SMS
@@ -219,13 +153,8 @@ enum ReminderStatus {
   FAILED
 }
 
-enum TicketStatus {
-  OPEN
-  CLOSED
-  IN_PROGRESS
-}
 
 enum ItemType {
   PRODUCT
-  SERVICE
+  EXPENSE
 }
