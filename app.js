@@ -12,6 +12,14 @@ app.use(express.json())
 app.use("/",(req,res)=>{
     res.send("HI");
 })
+
+app.use("/api/expense/parties",)
+app.use("/api/expense/items",)
+app.use("/api/expense/transactions",)
+//app.use("/api/expense/transactions/{transactionId}/items",)
+app.use("/api/expense/dashboard",)
+app.use("/api/expense/categories",)
+
 //app.use('/api/expenses', expenseRoutes)
 
 app.listen(5000, () => {
